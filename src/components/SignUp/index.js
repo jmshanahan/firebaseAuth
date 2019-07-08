@@ -6,6 +6,7 @@ import Typography from "@material-ui/core/Typography";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import * as ROUTES from '../../constants/routes';
 import {withFirebase} from '../Firebase';
+import {compose} from 'recompose';
 
 const styles = theme => ({
   "@global": {
@@ -96,7 +97,7 @@ const SignUpLink = withStyles(styles)(({classes}) => (
     Don't have an account? <Link variant="button" color="textPrimary" to={ROUTES.SIGN_UP} component={AdapterLink} className={classes.link}>Sign Up</Link>
   </p>
 ))
-const SignUpForm = withRouter(withFirebase(SignUpFormBase));
+const SignUpForm = compose(withRouter,withFirebase)(SignUpFormBase);
 export default SignUpPage;
 
 export { SignUpForm, SignUpLink };
