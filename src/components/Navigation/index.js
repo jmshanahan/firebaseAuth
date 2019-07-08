@@ -8,10 +8,10 @@ import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
 import CssBaseline from "@material-ui/core/CssBaseline"
 import * as ROUTES from "../../constants/routes";
-import {makeStyles} from '@material-ui/core/styles'
+import {withStyles} from '@material-ui/core/styles'
 import Link from '@material-ui/core/Link'
 
-const useStyles = makeStyles (theme => ({
+const styles = theme => ({
     '@global':{
       body: {backgroundColor: theme.palette.common.white}
     },
@@ -37,14 +37,12 @@ const useStyles = makeStyles (theme => ({
 
     toolbarMargin: theme.mixins.toolbar
 
-}))
+})
 
 const AdapterLink = React.forwardRef((props, ref) =>(<RouterLink innerRef={ref}{...props}/>));
 
-const Navigation = () => {
-  const classes = useStyles();
-
-    return (
+const Navigation = withStyles(styles)(({classes}) => (
+  
       <React.Fragment>
       <CssBaseline/>
         <AppBar position="static" color="default" elevation={0} className={classes.appBar}>
@@ -62,7 +60,7 @@ const Navigation = () => {
           </Toolbar>
         </AppBar>
       </React.Fragment>
-    );
-  }
+  
+  ));
 
 export default Navigation;
