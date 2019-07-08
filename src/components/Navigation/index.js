@@ -7,6 +7,7 @@ import Toolbar from "@material-ui/core/Toolbar";
 
 import Typography from "@material-ui/core/Typography";
 import CssBaseline from "@material-ui/core/CssBaseline"
+import SignOutButton from '../SignOut'
 import * as ROUTES from "../../constants/routes";
 import {withStyles} from '@material-ui/core/styles'
 import Link from '@material-ui/core/Link'
@@ -56,6 +57,7 @@ const Navigation = withStyles(styles)(({classes}) => (
                 <Link variant="button" color="textPrimary" to={ROUTES.HOME} component={AdapterLink} className={classes.link}>Home</Link>
                 <Link variant="button" color="textPrimary" to={ROUTES.ACCOUNT} component={AdapterLink} className={classes.link}>Account</Link>
                 <Link variant="button" color="textPrimary" to={ROUTES.ADMIN} component={AdapterLink} className={classes.link}>Admin</Link>
+                <SignOutButton/>
             </nav>
           </Toolbar>
         </AppBar>
