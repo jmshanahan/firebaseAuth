@@ -1,11 +1,11 @@
 import React,{Component} from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink , withRouter} from "react-router-dom";
 import { withStyles } from "@material-ui/core/styles";
 import Link from "@material-ui/core/Link";
 import Typography from "@material-ui/core/Typography";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import * as ROUTES from '../../constants/routes';
-import {FirebaseContext} from '../Firebase';
+import {withFirebase} from '../Firebase';
 
 const styles = theme => ({
   "@global": {
@@ -38,10 +38,7 @@ const AdapterLink = React.forwardRef((props, ref) => (
 const SignUpPage = () => (
   <div>
     <h1>Signup</h1>
-    <FirebaseContext.Consumer>
-
-    {firebase => <SignUpForm firebase={firebase}/>}
-    </FirebaseContext.Consumer>
+   <SignUpForm />
   </div>
 );
 const INITIAL_STATE = {
@@ -52,7 +49,7 @@ const INITIAL_STATE = {
     error: null,
     };
     
-class SignUpForm extends Component {
+class SignUpFormBase extends Component {
   constructor(props) {
     super(props);
     this.state = {...INITIAL_STATE}
@@ -62,6 +59,7 @@ class SignUpForm extends Component {
     this.props.firebase.doCreateUserWithEmailAndPassword(email, passwordOne)
     .then(authUser =>{
         this.setState({...INITIAL_STATE});
+        this.props.history.push(ROUTES.HOME);
     }).catch(error => {
         this.setState({error});
     })
@@ -98,7 +96,7 @@ const SignUpLink = withStyles(styles)(({classes}) => (
     Don't have an account? <Link variant="button" color="textPrimary" to={ROUTES.SIGN_UP} component={AdapterLink} className={classes.link}>Sign Up</Link>
   </p>
 ))
-
+const SignUpForm = withRouter(withFirebase(SignUpFormBase));
 export default SignUpPage;
 
 export { SignUpForm, SignUpLink };
