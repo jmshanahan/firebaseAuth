@@ -97,6 +97,15 @@ const NavigationAuth = withStyles(styles)(({ classes }) => (
           >
             Account
           </Link>
+          <Link
+            variant="button"
+            color="textPrimary"
+            to={ROUTES.ADMIN}
+            component={AdapterLink}
+            className={classes.link}
+          >
+            Admin
+          </Link>          
           <SignOutButton />
         </nav>
       </Toolbar>
