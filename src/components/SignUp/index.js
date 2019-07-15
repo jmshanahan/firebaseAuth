@@ -1,107 +1,130 @@
-import React,{Component} from "react";
-import { Link as RouterLink , withRouter} from "react-router-dom";
-import { withStyles } from "@material-ui/core/styles";
-import Link from "@material-ui/core/Link";
-import Typography from "@material-ui/core/Typography";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import * as ROUTES from '../../constants/routes';
-import {withFirebase} from '../Firebase';
-import {compose} from 'recompose';
-
-const styles = theme => ({
-  "@global": {
-    body: { backgroundColor: theme.palette.common.white }
-  },
-  ul: {
-    margin: 0,
-    padding: 0
-  },
-  li: {
-    listStyle: "none"
-  },
-
-  toolbar: {
-    flexWrap: "wrap"
-  },
-  toolbarTitle: {
-    flexGrow: 1
-  },
-  link: {
-    margin: theme.spacing(1, 1.5)
-  },
-
-});
-
-const AdapterLink = React.forwardRef((props, ref) => (
-  <RouterLink innerRef={ref} {...props} />
-));
+import React, { Component } from "react";
+import { Link, withRouter } from "react-router-dom";
+import * as ROUTES from "../../constants/routes";
+import * as ROLES from '../../constants/roles';
+import { withFirebase } from "../Firebase";
+import { compose } from "recompose";
 
 const SignUpPage = () => (
   <div>
     <h1>Signup</h1>
-   <SignUpForm />
+    <SignUpForm />
   </div>
 );
 const INITIAL_STATE = {
-    username: '',
-    email: '',
-    passwordOne: '',
-    passwordTwo: '',
-    error: null,
-    };
-    
+  username: "",
+  email: "",
+  passwordOne: "",
+  passwordTwo: "",
+  isAdmin: false,
+  error: null
+};
+
 class SignUpFormBase extends Component {
   constructor(props) {
     super(props);
-    this.state = {...INITIAL_STATE}
+    this.state = { ...INITIAL_STATE };
   }
   onSubmit = event => {
-    const {username, email, passwordOne} = this.state;
-    this.props.firebase.doCreateUserWithEmailAndPassword(email, passwordOne)
-    .then(authUser => {
-      return this.props.firebase.user(authUser.user.uid)
-      .set({username,email});
-    })
-    .then(() =>{
-        this.setState({...INITIAL_STATE});
+    const { username, email, passwordOne, isAdmin } = this.state;
+    const roles = [];
+    if(isAdmin){
+      roles.push(ROLES.ADMIN);
+    }
+    this.props.firebase
+      .doCreateUserWithEmailAndPassword(email, passwordOne)
+      .then(authUser => {
+        return this.props.firebase
+          .user(authUser.user.uid)
+          .set({ username, email,roles });
+      })
+      .then(() => {
+        this.setState({ ...INITIAL_STATE });
         this.props.history.push(ROUTES.HOME);
-    }).catch(error => {
-        this.setState({error});
-    })
+      })
+      .catch(error => {
+        this.setState({ error });
+      });
     event.preventDefault();
-
   };
-  onChange = event => {this.setState({[event.target.name]:event.target.value})};
+  onChange = event => {
+    this.setState({ [event.target.name]: event.target.value });
+  };
+  onChangeCheckbox = event => {
+    this.setState({ [event.target.name]: event.target.checked });
+  };
   render() {
-      const {
-          username, email, passwordOne,passwordTwo,error
-      }= this.state;
-      const isInvalid = 
-        passwordOne!== passwordTwo ||
-        passwordOne ==='' ||
-        email==='' ||
-        username==='';
+    const {
+      username,
+      email,
+      passwordOne,
+      passwordTwo,
+      isAdmin,
+      error
+    } = this.state;
+    const isInvalid =
+      passwordOne !== passwordTwo ||
+      passwordOne === "" ||
+      email === "" ||
+      username === "";
 
-    return (<form onSubmit={this.onSubmit}>
-    <input name="username" value={username} onChange={this.onChange} type="text" placeholder="Full Name"/>
-    <input name="email" value={email} onChange={this.onChange} type="text" placeholder="Email Address"/>
-    <input name="passwordOne" value={passwordOne} onChange={this.onChange} type="password" placeholder="Password"/>
-    <input name="passwordTwo" value={passwordTwo} onChange={this.onChange} type="text" placeholder="Confirm Password"/>
-    <button disabled={isInvalid} type="submit">Sign Up</button>
-    {error && <p>{error.message}</p>}
-
-
-    </form>
-    )
+    return (
+      <form onSubmit={this.onSubmit}>
+        <input
+          name="username"
+          value={username}
+          onChange={this.onChange}
+          type="text"
+          placeholder="Full Name"
+        />
+        <input
+          name="email"
+          value={email}
+          onChange={this.onChange}
+          type="text"
+          placeholder="Email Address"
+        />
+        <input
+          name="passwordOne"
+          value={passwordOne}
+          onChange={this.onChange}
+          type="password"
+          placeholder="Password"
+        />
+        <input
+          name="passwordTwo"
+          value={passwordTwo}
+          onChange={this.onChange}
+          type="text"
+          placeholder="Confirm Password"
+        />
+        <label>
+          Admin:{" "}
+          <input
+            name="isAdmin"
+            type="checkbox"
+            checked={isAdmin}
+            onChange={this.onChangeCheckbox}
+          />
+        </label>
+        <button disabled={isInvalid} type="submit">
+          Sign Up
+        </button>
+        {error && <p>{error.message}</p>}
+      </form>
+    );
   }
 }
 
-const SignUpLink = withStyles(styles)(({classes}) => (
+const SignUpLink = () => (
   <p>
-    Don't have an account? <Link variant="button" color="textPrimary" to={ROUTES.SIGN_UP} component={AdapterLink} className={classes.link}>Sign Up</Link>
+    Don't have an account? <Link to={ROUTES.SIGN_UP}>Sign Up</Link>
   </p>
-))
-const SignUpForm = compose(withRouter,withFirebase)(SignUpFormBase);
+);
+const SignUpForm = compose(
+  withRouter,
+  withFirebase
+)(SignUpFormBase);
 export default SignUpPage;
 
 export { SignUpForm, SignUpLink };
