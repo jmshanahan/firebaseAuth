@@ -1,6 +1,10 @@
 import React, { Component } from "react";
 import { compose } from "recompose";
-import { withAuthorization, withEmailVerification } from "../Session";
+import {
+  AuthUserContext,
+  withAuthorization,
+  withEmailVerification
+} from "../Session";
 import { withFirebase } from "../Firebase";
 
 const HomePage = () => {
@@ -30,21 +34,22 @@ class MessagesBase extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      text:'',
+      text: "",
       loading: false,
       messages: []
     };
   }
-  onChangeText = event =>{
-    this.setState({text: event.target.value})
-  }
-  onCreateMessage = event => {
+  onChangeText = event => {
+    this.setState({ text: event.target.value });
+  };
+  onCreateMessage = (event, authUser) => {
     this.props.firebase.messages().push({
       text: this.state.text,
-    })
-    this.setState({text: ''});
+      userId: authUser.uid
+    });
+    this.setState({ text: "" });
     event.preventDefault();
-  }
+  };
   componentDidMount() {
     // convert messages list from snapshot
     this.props.firebase.messages().on("value", snapshot => {
@@ -54,7 +59,7 @@ class MessagesBase extends Component {
           ...messageObject[key],
           uid: key
         }));
-        this.setState({ messages: messageList,loading: false });
+        this.setState({ messages: messageList, loading: false });
       } else {
         this.setState({ messages: null, loading: false });
       }
@@ -67,20 +72,24 @@ class MessagesBase extends Component {
   }
 
   render() {
-    const { text,messages, loading } = this.state;
+    const { text, messages, loading } = this.state;
     return (
-      <div>
-        {loading && <div>Loading...</div>}
-        {messages ? (
-          <MessageList messages={messages} />
-        ) : (
-          <div>There are no messages ...</div>
+      <AuthUserContext.Consumer>
+        {authUser => (
+          <div>
+            {loading && <div>Loading...</div>}
+            {messages ? (
+              <MessageList messages={messages} />
+            ) : (
+              <div>There are no messages ...</div>
+            )}
+            <form onSubmit={event => this.onCreateMessage(event, authUser)}>
+              <input type="text" value={text} onChange={this.onChangeText} />
+              <button type="submit">Send</button>
+            </form>
+          </div>
         )}
-        <form onSubmit={this.onCreateMessage}>
-          <input type="text" value={text} onChange={this.onChangeText}/>
-          <button type="submit">Send</button>
-        </form>
-      </div>
+      </AuthUserContext.Consumer>
     );
   }
 }
