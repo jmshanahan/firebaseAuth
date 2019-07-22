@@ -34,6 +34,11 @@ class Firebase {
   user = uid => this.db.ref(`users/${uid}`);
   users = () => this.db.ref('users');
 
+  // * Message API
+  message = uid => this.db.ref(`messages/${uid}`)
+  messages = () => this.db.ref('messages');
+
+
   doSendEmailVerification = () => this.auth.currentUser.sendEmailVerification({url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT})
   // * Merge Auth and DB User API
   onAuthUserListener = (next, fallback)=>{
