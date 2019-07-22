@@ -6,7 +6,6 @@ import {
   withEmailVerification
 } from "../Session";
 import { withFirebase } from "../Firebase";
-import { auth } from "firebase";
 
 const HomePage = () => {
   return (
@@ -58,6 +57,10 @@ class MessageItem extends Component {
     const { editMode, editText } = this.state;
     return (
       <li>
+        {!editMode && (
+          <button type="button" onClick={() => onRemoveMessage}>Delete</button>
+        )}
+
         {editMode ? (
           <input
             type="text"
@@ -67,28 +70,11 @@ class MessageItem extends Component {
         ) : (
           <span>
             <strong>{message.userId}</strong> {message.text}
+            {message.editedAt && <span>(Edited)</span>}
           </span>
         )}
 
-        <span>
-          <strong>{message.userId}</strong>
-          {message.text}
-        </span>
 
-        {editMode ? (
-          <span>
-            <button type="button" onClick={() => this.onSaveEditText}>
-              Save
-            </button>
-            <button type="button" onClick={() => this.onToggleEditMode}>
-              Reset
-            </button>
-          </span>
-        ) : (
-          <button type="button" onClick={() => this.onToggleEditMode}>
-            Delete
-          </button>
-        )}
       </li>
     );
   }
@@ -109,7 +95,8 @@ class MessagesBase extends Component {
   onCreateMessage = (event, authUser) => {
     this.props.firebase.messages().push({
       text: this.state.text,
-      userId: authUser.uid
+      userId: authUser.uid,
+      createdAt: this.props.firebase.serverValue.TIMESTAMP,
     });
     this.setState({ text: "" });
     event.preventDefault();
@@ -137,7 +124,13 @@ class MessagesBase extends Component {
   onRemoveMessage = uid => {
     this.props.firebase.message(uid).remove();
   };
-  onEditMessage = () => {};
+  onEditMessage = (message, text) => {
+    this.props.firebase.message(message.uid).set({
+      ...message,
+      text,
+      editedAt: this.props.firebase.serverValue.TIMESTAMP
+    })
+  };
   render() {
     const { text, messages, loading } = this.state;
     return (
