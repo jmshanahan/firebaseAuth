@@ -58,7 +58,9 @@ class MessageItem extends Component {
     return (
       <li>
         {!editMode && (
-          <button type="button" onClick={() => onRemoveMessage}>Delete</button>
+          <button type="button" onClick={() => onRemoveMessage}>
+            Delete
+          </button>
         )}
 
         {editMode ? (
@@ -70,11 +72,24 @@ class MessageItem extends Component {
         ) : (
           <span>
             <strong>{message.userId}</strong> {message.text}
-            {message.editedAt && <span>(Edited)</span>}
+            {message.editedAt && <span>Edited</span>}
           </span>
         )}
 
-
+        {editMode ? (
+          <span>
+            <button type="button" onClick={() => this.onSaveEditText}>
+              Save
+            </button>
+            <button type="button" onClick={() => this.onToggleEditMode}>
+              Reset
+            </button>
+          </span>
+        ) : (
+          <button type="button" onClick={() => this.onToggleEditMode}>
+            Edit
+          </button>
+        )}
       </li>
     );
   }
@@ -93,10 +108,11 @@ class MessagesBase extends Component {
     this.setState({ text: event.target.value });
   };
   onCreateMessage = (event, authUser) => {
+    console.log(`Create messages ${this.state.text}`)
     this.props.firebase.messages().push({
       text: this.state.text,
       userId: authUser.uid,
-      createdAt: this.props.firebase.serverValue.TIMESTAMP,
+      createdAt: this.props.firebase.serverValue.TIMESTAMP
     });
     this.setState({ text: "" });
     event.preventDefault();
@@ -129,7 +145,7 @@ class MessagesBase extends Component {
       ...message,
       text,
       editedAt: this.props.firebase.serverValue.TIMESTAMP
-    })
+    });
   };
   render() {
     const { text, messages, loading } = this.state;
