@@ -21,7 +21,7 @@ const MessageList = ({ messages, onEditMessage, onRemoveMessage }) => (
   <ul>
     {messages.map(message => (
       <MessageItem
-        key={message.key}
+        key={message.uid}
         message={message}
         onEditMessage={onEditMessage}
         onRemoveMessage={onRemoveMessage}
@@ -61,7 +61,7 @@ class MessageItem extends Component {
     const { message, onRemoveMessage } = this.props;
     const { editMode, editText } = this.state;
     return (
-      <li>
+      <li key={message.key}>
         {editMode ? (
           <input
             type="text"
@@ -99,8 +99,9 @@ class MessagesBase extends Component {
     super(props);
     this.state = {
       text: "",
-      loading: false,
-      messages: []
+      loading: true,
+      messages: [],
+      limit: 5
     };
   }
   onChangeText = event => {
@@ -110,7 +111,7 @@ class MessagesBase extends Component {
     this.props.firebase.messages().push({
       text: this.state.text,
       userId: authUser.uid,
-      createdAt: this.props.firebase.serverValue.TIMESTAMP,
+      createdAt: this.props.firebase.serverValue.TIMESTAMP
     });
     this.setState({ text: "" });
     event.preventDefault();
@@ -120,26 +121,39 @@ class MessagesBase extends Component {
       ...message,
       text,
       editedAt: this.props.firebase.serverValue.TIMESTAMP
-    })
+    });
+  };
+  onListenForMessages = () =>{
+    this.setState({loading: true});
+    // convert messages list from snapshot
+    const {limit} = this.state;
+    this.props.firebase
+      .messages()
+      .orderByChild("createdAt")
+      .limitToLast(limit)
+      .on("value", snapshot => {
+        const messageObject = snapshot.val();
+        if (messageObject) {
+          const messageList = Object.keys(messageObject).map(key => ({
+            ...messageObject[key],
+            uid: key
+          }));
+          this.setState({ messages: messageList, loading: false });
+        } else {
+          this.setState({ messages: null, loading: false });
+        }
+      });
+  };
+
+  onNextPage = () => {
+    this.setState(
+      state => ({limit: state.limit + 5}),
+      this.onListenForMessages,
+    )
   }
 
-
   componentDidMount() {
-    // convert messages list from snapshot
-    this.props.firebase.messages().on("value", snapshot => {
-      const messageObject = snapshot.val();
-      if (messageObject) {
-        const messageList = Object.keys(messageObject).map(key => ({
-          ...messageObject[key],
-          uid: key
-        }));
-        this.setState({ messages: messageList, loading: false });
-      } else {
-        this.setState({ messages: null, loading: false });
-      }
-    });
-
-    this.setState({ loading: false });
+    this.onListenForMessages();
   }
   componentWillUnmount() {
     this.props.firebase.messages().off();
@@ -147,14 +161,18 @@ class MessagesBase extends Component {
   onRemoveMessage = uid => {
     this.props.firebase.message(uid).remove();
   };
-  
 
   render() {
     const { text, messages, loading } = this.state;
+    console.log(`Loading = ${loading}`);
     return (
       <AuthUserContext.Consumer>
         {authUser => (
           <div>
+            {!loading && messages && (
+              <button type="button" onClick={this.onNextPage}>More</button>
+            )}
+
             {loading && <div>Loading...</div>}
             {messages ? (
               <MessageList
