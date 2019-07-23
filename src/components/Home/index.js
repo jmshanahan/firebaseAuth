@@ -17,19 +17,82 @@ const HomePage = () => {
   );
 };
 
-const MessageList = ({ messages, onRemoveMessage }) => (
+const MessageList = ({ messages, onEditMessage, onRemoveMessage }) => (
   <ul>
     {messages.map(message => (
-      <MessageItem key={message.key} message={message} onRemoveMessage={onRemoveMessage}/>
+      <MessageItem
+        key={message.key}
+        message={message}
+        onEditMessage={onEditMessage}
+        onRemoveMessage={onRemoveMessage}
+      />
     ))}
   </ul>
 );
-const MessageItem = ({ message, onRemoveMessage }) => (
-  <li>
-    <strong>{message.userId}</strong> {message.text}
-    <button type="button" onClick={() => onRemoveMessage(message.uid)}>Delete</button>
-  </li>
-);
+// const MessageItem = ({ message, onRemoveMessage }) => (
+//   <li>
+//     <strong>{message.userId}</strong> {message.text}
+//     <button type="button" onClick={() => onRemoveMessage(message.uid)}>Delete</button>
+//   </li>
+// );
+
+class MessageItem extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      editMode: false,
+      editText: this.props.message.text
+    };
+  }
+  onToggleEditMode = () => {
+    this.setState(state => ({
+      editMode: !state.editMode,
+      editText: this.props.message.text
+    }));
+  };
+  onChangeEditText = event => {
+    this.setState({ editText: event.target.value });
+  };
+  onSaveEditText = () => {
+    this.props.onEditMessage(this.props.message, this.state.editText);
+    this.setState({ editMode: false });
+  };
+  render() {
+    const { message, onRemoveMessage } = this.props;
+    const { editMode, editText } = this.state;
+    return (
+      <li>
+        {editMode ? (
+          <input
+            type="text"
+            value={editText}
+            onChange={this.onChangeEditText}
+          />
+        ) : (
+          <span>
+            <strong>{message.userId}</strong> {message.text}
+            {message.editedAt && <span>Edited</span>}
+          </span>
+        )}
+
+        {editMode ? (
+          <span>
+            <button onClick={this.onSaveEditText}>Save</button>
+            <button onClick={this.onToggleEditMode}>Reset</button>
+          </span>
+        ) : (
+          <button onClick={this.onToggleEditMode}>Edit</button>
+        )}
+
+        {!editMode && (
+          <button type="button" onClick={() => onRemoveMessage(message.uid)}>
+            Delete
+          </button>
+        )}
+      </li>
+    );
+  }
+}
 
 class MessagesBase extends Component {
   constructor(props) {
@@ -46,11 +109,21 @@ class MessagesBase extends Component {
   onCreateMessage = (event, authUser) => {
     this.props.firebase.messages().push({
       text: this.state.text,
-      userId: authUser.uid
+      userId: authUser.uid,
+      createdAt: this.props.firebase.serverValue.TIMESTAMP,
     });
     this.setState({ text: "" });
     event.preventDefault();
   };
+  onEditMessage = (message, text) => {
+    this.props.firebase.message(message.uid).set({
+      ...message,
+      text,
+      editedAt: this.props.firebase.serverValue.TIMESTAMP
+    })
+  }
+
+
   componentDidMount() {
     // convert messages list from snapshot
     this.props.firebase.messages().on("value", snapshot => {
@@ -73,7 +146,9 @@ class MessagesBase extends Component {
   }
   onRemoveMessage = uid => {
     this.props.firebase.message(uid).remove();
-  }
+  };
+  
+
   render() {
     const { text, messages, loading } = this.state;
     return (
@@ -82,7 +157,11 @@ class MessagesBase extends Component {
           <div>
             {loading && <div>Loading...</div>}
             {messages ? (
-              <MessageList messages={messages} onRemoveMessage={this.onRemoveMessage} />
+              <MessageList
+                messages={messages}
+                onEditMessage={this.onEditMessage}
+                onRemoveMessage={this.onRemoveMessage}
+              />
             ) : (
               <div>There are no messages ...</div>
             )}
