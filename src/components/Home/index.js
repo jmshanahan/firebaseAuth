@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 import { compose } from "recompose";
+import cuid from 'cuid';
+
 import {
   AuthUserContext,
   withAuthorization,
@@ -7,15 +9,66 @@ import {
 } from "../Session";
 import { withFirebase } from "../Firebase";
 
-const HomePage = () => {
-  return (
-    <div>
-      <h1>Home</h1>
-      <p>The Home Page is accessible to every signed in user.</p>
-      <Messages />
-    </div>
-  );
-};
+class HomePage extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      loading: true,
+      users: []
+    };
+  }
+
+  componentDidMount() {
+    this.props.firebase.users().on("value", snapshot => {
+      const userObject = snapshot.val();
+      if (userObject) {
+        const userList = Object.keys(userObject).map(key => ({
+          ...userObject[key],
+          uid: key
+        }));
+      this.setState({
+        users: userList,
+        loading: false
+      });
+    }else{
+      this.setState({users: null})
+    }
+  })}
+  componentWillUnmount() {
+    this.props.firebase.users().off();
+  }
+  render() {
+    const {users, loading} = this.state;
+    return (
+      <div>
+        <h1>Home</h1>
+        <p>The Home Page is accessible to every signed in user.</p>
+
+        {users ? (<UserList users={users}/>) :(
+          <div> There are no users</div>
+        ) }
+        
+        
+        {/* {users ?  <Messages users={users}/> : null } */}
+        
+      </div>
+    );
+  }
+}
+
+const UserList = ({ users  }) => (
+  <ul>
+    {users.map(user => (
+      <UserItem key={user.uid} user={user}/>
+    ))}
+  </ul>
+);
+const UserItem = ({user}) =>(
+  <li >
+      <strong>{user.email}</strong>{user.uid}
+  </li>
+)
 
 const MessageList = ({ messages, onEditMessage, onRemoveMessage }) => (
   <ul>
@@ -29,12 +82,6 @@ const MessageList = ({ messages, onEditMessage, onRemoveMessage }) => (
     ))}
   </ul>
 );
-// const MessageItem = ({ message, onRemoveMessage }) => (
-//   <li>
-//     <strong>{message.userId}</strong> {message.text}
-//     <button type="button" onClick={() => onRemoveMessage(message.uid)}>Delete</button>
-//   </li>
-// );
 
 class MessageItem extends Component {
   constructor(props) {
@@ -70,6 +117,7 @@ class MessageItem extends Component {
           />
         ) : (
           <span>
+          <strong>{ message.user.userId}</strong>
             <strong>{message.userId}</strong> {message.text}
             {message.editedAt && <span>Edited</span>}
           </span>
@@ -123,10 +171,10 @@ class MessagesBase extends Component {
       editedAt: this.props.firebase.serverValue.TIMESTAMP
     });
   };
-  onListenForMessages = () =>{
-    this.setState({loading: true});
+  onListenForMessages = () => {
+    this.setState({ loading: true });
     // convert messages list from snapshot
-    const {limit} = this.state;
+    const { limit } = this.state;
     this.props.firebase
       .messages()
       .orderByChild("createdAt")
@@ -147,10 +195,10 @@ class MessagesBase extends Component {
 
   onNextPage = () => {
     this.setState(
-      state => ({limit: state.limit + 5}),
-      this.onListenForMessages,
-    )
-  }
+      state => ({ limit: state.limit + 5 }),
+      this.onListenForMessages
+    );
+  };
 
   componentDidMount() {
     this.onListenForMessages();
@@ -163,20 +211,25 @@ class MessagesBase extends Component {
   };
 
   render() {
+    const {users} = this.props;
     const { text, messages, loading } = this.state;
-    console.log(`Loading = ${loading}`);
     return (
       <AuthUserContext.Consumer>
         {authUser => (
           <div>
             {!loading && messages && (
-              <button type="button" onClick={this.onNextPage}>More</button>
+              <button type="button" onClick={this.onNextPage}>
+                More
+              </button>
             )}
 
             {loading && <div>Loading...</div>}
             {messages ? (
               <MessageList
-                messages={messages}
+                messages={messages.map(message => ({
+                  ...message,
+                  user: users ? users[message.userId]:{userId:message.userId}
+                }))}
                 onEditMessage={this.onEditMessage}
                 onRemoveMessage={this.onRemoveMessage}
               />
@@ -198,6 +251,7 @@ const Messages = withFirebase(MessagesBase);
 
 const condition = authUser => !!authUser;
 export default compose(
+  withFirebase,
   withEmailVerification,
   withAuthorization(condition)
 )(HomePage);
