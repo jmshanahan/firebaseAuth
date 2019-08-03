@@ -19,6 +19,8 @@ class Firebase {
     this.serverValue = app.database.ServerValue;
     this.googleProvider = new app.auth.GoogleAuthProvider();
     this.googleProvider.addScope('email');
+    this.facebookProvider = new app.auth.FacebookAuthProvider();
+    // this.facebookProvider.addScope('email');
   }
   // * Auth API *
   doCreateUserWithEmailAndPassword = (email, password) =>
@@ -27,6 +29,7 @@ class Firebase {
   doSignInWithEmailAndPassword = (email, password) =>
     this.auth.signInWithEmailAndPassword(email, password);
   doSignInWithGoogle = () => this.auth.signInWithPopup(this.googleProvider);
+  doSignInWithFacebook = () => this.auth.signInWithPopup(this.facebookProvider);
     doSignOut = () => this.auth.signOut();
 
   doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
@@ -49,18 +52,24 @@ class Firebase {
         this.user(authUser.uid)
         .once('value')
         .then(snapShot => {
-          const dbUser = snapShot.val();
-          if(!dbUser.roles){
-            dbUser.roles=[]
+          if(!snapShot.exists()){
+            fallback();
+          }else{
+
+            const dbUser = snapShot.val();
+            if(!dbUser.roles){
+              dbUser.roles=[]
+            }
+            authUser ={
+              uid: authUser.uid,
+              email: authUser.email,
+              emailVerified: authUser.emailVerified,
+              providerData: authUser.providerData,
+              ...dbUser
+            }
+            next(authUser)
           }
-          authUser ={
-            uid: authUser.uid,
-            email: authUser.email,
-            emailVerified: authUser.emailVerified,
-            providerData: authUser.providerData,
-            ...dbUser
-          }
-          next(authUser)
+
         })
       }else{
         fallback()

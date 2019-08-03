@@ -99,7 +99,7 @@ class SignUpFormBase extends Component {
           name="passwordTwo"
           value={passwordTwo}
           onChange={this.onChange}
-          type="text"
+          type="password"
           placeholder="Confirm Password"
         />
         <label>
