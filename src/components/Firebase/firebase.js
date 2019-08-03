@@ -18,6 +18,7 @@ class Firebase {
     this.db = app.database();
     this.serverValue = app.database.ServerValue;
     this.googleProvider = new app.auth.GoogleAuthProvider();
+    this.googleProvider.addScope('email');
   }
   // * Auth API *
   doCreateUserWithEmailAndPassword = (email, password) =>

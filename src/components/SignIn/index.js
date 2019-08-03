@@ -68,8 +68,8 @@ class SignInGoogleBase extends Component{
             return this.props.firebase
             .user(socialAuthUser.user.uid)
             .set({
-                username: socialAuthUser.user.uid,
-                email: socialAuthUser.user.email,
+                username: socialAuthUser.user.displayName,
+                email: socialAuthUser.additionalUserInfo.profile.email,
                 roles:[],
             })
         })

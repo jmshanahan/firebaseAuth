@@ -28,6 +28,7 @@ class SignUpFormBase extends Component {
   onSubmit = event => {
     const { username, email, passwordOne, isAdmin } = this.state;
     const roles = [];
+    // roles.push(ROLES.USER)
     if(isAdmin){
       roles.push(ROLES.ADMIN);
     }
