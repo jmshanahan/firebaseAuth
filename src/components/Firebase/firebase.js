@@ -1,6 +1,6 @@
 import app from "firebase/app";
 import "firebase/auth";
-import 'firebase/database'
+import "firebase/database";
 
 const config = {
   apiKey: process.env.REACT_APP_API_KEY,
@@ -18,9 +18,9 @@ class Firebase {
     this.db = app.database();
     this.serverValue = app.database.ServerValue;
     this.googleProvider = new app.auth.GoogleAuthProvider();
-    this.googleProvider.addScope('email');
+    this.googleProvider.addScope("email");
     this.facebookProvider = new app.auth.FacebookAuthProvider();
-    // this.facebookProvider.addScope('email');
+    this.twitterProvider = new app.auth.TwitterAuthProvider();
   }
   // * Auth API *
   doCreateUserWithEmailAndPassword = (email, password) =>
@@ -30,51 +30,52 @@ class Firebase {
     this.auth.signInWithEmailAndPassword(email, password);
   doSignInWithGoogle = () => this.auth.signInWithPopup(this.googleProvider);
   doSignInWithFacebook = () => this.auth.signInWithPopup(this.facebookProvider);
-    doSignOut = () => this.auth.signOut();
+  doSignInWithTwitter = () => this.auth.signInWithPopup(this.twitterProvider);
+  doSignOut = () => this.auth.signOut();
 
   doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
   doPasswordUpdate = password => this.auth.currentUser.updatePassword(password);
 
   // * User API
   user = uid => this.db.ref(`users/${uid}`);
-  users = () => this.db.ref('users');
+  users = () => this.db.ref("users");
 
   // * Message API
-  message = uid => this.db.ref(`messages/${uid}`)
-  messages = () => this.db.ref('messages');
+  message = uid => this.db.ref(`messages/${uid}`);
+  messages = () => this.db.ref("messages");
 
-
-  doSendEmailVerification = () => this.auth.currentUser.sendEmailVerification({url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT})
+  doSendEmailVerification = () =>
+    this.auth.currentUser.sendEmailVerification({
+      url: process.env.REACT_APP_CONFIRMATION_EMAIL_REDIRECT
+    });
   // * Merge Auth and DB User API
-  onAuthUserListener = (next, fallback)=>{
+  onAuthUserListener = (next, fallback) => {
     this.auth.onAuthStateChanged(authUser => {
-      if(authUser){
+      if (authUser) {
         this.user(authUser.uid)
-        .once('value')
-        .then(snapShot => {
-          if(!snapShot.exists()){
-            fallback();
-          }else{
-
-            const dbUser = snapShot.val();
-            if(!dbUser.roles){
-              dbUser.roles=[]
+          .once("value")
+          .then(snapShot => {
+            if (!snapShot.exists()) {
+              fallback();
+            } else {
+              const dbUser = snapShot.val();
+              if (!dbUser.roles) {
+                dbUser.roles = [];
+              }
+              authUser = {
+                uid: authUser.uid,
+                email: authUser.email,
+                emailVerified: authUser.emailVerified,
+                providerData: authUser.providerData,
+                ...dbUser
+              };
+              next(authUser);
             }
-            authUser ={
-              uid: authUser.uid,
-              email: authUser.email,
-              emailVerified: authUser.emailVerified,
-              providerData: authUser.providerData,
-              ...dbUser
-            }
-            next(authUser)
-          }
-
-        })
-      }else{
-        fallback()
+          });
+      } else {
+        fallback();
       }
-    })
-  }
+    });
+  };
 }
 export default Firebase;
