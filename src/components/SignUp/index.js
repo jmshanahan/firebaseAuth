@@ -5,6 +5,16 @@ import * as ROLES from '../../constants/roles';
 import { withFirebase } from "../Firebase";
 import { compose } from "recompose";
 
+const ERROR_CODE_ACCOUNT_EXISTS =
+  "auth/email-already-in-use";
+const ERROR_MSG_ACCOUNT_EXISTS = `
+    An account with an E-Mail address already exists.
+    Try to login with this account instead. If you think the 
+    account is already used from one of the social logins, try 
+    to sign-in with one of them. Afterwards, associate your accounts
+    on your personal account page.
+    `;
+
 const SignUpPage = () => (
   <div>
     <h1>Signup</h1>
@@ -47,6 +57,9 @@ class SignUpFormBase extends Component {
         this.props.history.push(ROUTES.HOME);
       })
       .catch(error => {
+        if(error.code === ERROR_CODE_ACCOUNT_EXISTS){
+          error.message = ERROR_MSG_ACCOUNT_EXISTS;
+        }
         this.setState({ error });
       });
     event.preventDefault();
