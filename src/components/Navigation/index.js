@@ -1,10 +1,12 @@
-import React, { Fragment } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 
 import SignOutButton from "../SignOut";
 import * as ROUTES from "../../constants/routes";
 import * as ROLES from "../../constants/roles";
+
 import { AuthUserContext } from "../Session";
+import { Container, Menu } from "semantic-ui-react";
 
 const Navigation = () => (
   <AuthUserContext.Consumer>
@@ -15,36 +17,27 @@ const Navigation = () => (
 );
 
 const NavigationAuth = ({ authUser }) => (
-  <Fragment>
-    <ul>
-      <li>
-        <Link to={ROUTES.LANDING}>Landing</Link>
-      </li>
-      <li>
-        <Link to={ROUTES.HOME}>Home</Link>
-      </li>
-      <li>
-        <Link to={ROUTES.ACCOUNT}>Account</Link>
-      </li>
-      { authUser.roles.includes(ROLES.ADMIN) } 
-        <li>
-          <Link to={ROUTES.ADMIN}>Admin</Link>
-        </li>
-            <SignOutButton />
-    </ul>
-  </Fragment>
+  <Menu pointing secondary>
+    <Container>
+      <Menu.Item name="Landing" as={Link} to={ROUTES.LANDING} />
+      <Menu.Item name="home" as={Link} to={ROUTES.HOME} />
+      <Menu.Item name="Account" as={Link} to={ROUTES.ACCOUNT} />
+      {!!authUser.roles.includes[ROLES.ADMIN] && (
+        <Menu.Item name="Admin" as={Link} to={ROUTES.ADMIN} />
+      )}
+      <SignOutButton />
+    </Container>
+  </Menu>
 );
 const NavigationNonAuth = () => (
-  <Fragment>
-    <ul>
-      <li>
-        <Link to={ROUTES.SIGN_IN}>Sign In</Link>
-      </li>
+  <Menu pointing secondary>
+    <Container>
+      <Menu.Item name="home" as={Link} to={ROUTES.LANDING}/>
 
-      <li>
-        <Link to={ROUTES.LANDING}> Landing</Link>
-      </li>
-    </ul>
-  </Fragment>
+      <Menu.Menu position="right">
+        <Menu.Item name="signin" as={Link} to={ROUTES.SIGN_IN} /> 
+      </Menu.Menu>
+    </Container>
+  </Menu>
 );
 export default Navigation;

@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import 'semantic-ui-css/semantic.min.css'
 // import CssBaseline from "@material-ui/core/CssBaseline";
 
 // import { ThemeProvider } from "@material-ui/styles";
